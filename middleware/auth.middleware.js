@@ -15,7 +15,7 @@ const verifyToken = (req, res, next) => {
 };
 
 const isManager = (req, res, next) => {
-  if (req.user.role !== 'manager') {
+  if (req.user.role.role !== 'manager') {
     return res.status(403).json({ message: 'Yêu cầu quyền Quản lý' });
   }
   next();

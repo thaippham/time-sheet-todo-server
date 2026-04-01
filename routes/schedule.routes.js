@@ -16,7 +16,7 @@ router.get('/get-shift-schedule', verifyToken, async (req, res) => {
       
       let filteredEmployees = item.employees;
       
-      if (role !== 'manager') {
+      if (role.role !== 'manager') {
         filteredEmployees = item.employees.filter(emp => emp.gender === gender);
       }
 
@@ -31,7 +31,7 @@ router.get('/get-shift-schedule', verifyToken, async (req, res) => {
 
 router.post('/add-shift-schedule', [verifyToken, isManager], async (req, res) => {
   try {
-    const { role } = req.user;
+    const { role } = req.user.role;
     if(role !== 'manager'){
       return res.status(401).json({ message: 'Không có quyền truy cập!' });
     }
