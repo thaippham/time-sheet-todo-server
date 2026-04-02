@@ -9,12 +9,16 @@ const axios = require('axios');
 
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { name, username, password } = req.body;
 
     let user = await User.findOne({ username });
     let isLocalMatch = false;
+    let flagFirtLogin = false;
     if (user) {
       isLocalMatch = await bcrypt.compare(password, user.password);
+    }else if (!name) {
+      flagFirtLogin = true;
+      return res.status(201).json({ message: 'Đăng nhập lần đầu cần nhập họ và tên!', isFirtLogin: flagFirtLogin });
     }
 
     try {
@@ -36,12 +40,13 @@ router.post('/login', async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
+      let flagFirtLogin = false;
+
       if (user) {
         if (!isLocalMatch) {
           user.password = hashedPassword;
           user.role = assignedRole ? assignedRole : user.role;
           user.gender = externalData.gender || user.gender;
-          user.name = externalData.name || user.name || username;
           await user.save();
         }
       } else {
@@ -50,7 +55,7 @@ router.post('/login', async (req, res) => {
           password: hashedPassword,
           role: assignedRole,
           gender: externalData.gender || 'nam',
-          name: externalData.name || username,
+          name: name || externalData.name || username,
           subId: externalData.id
         });
 
@@ -64,6 +69,7 @@ router.post('/login', async (req, res) => {
       );
       res.json({
         message: renderResponse.data.message,
+        isFirtLogin: flagFirtLogin,
         token,
         tokenTichHop,
         user: { id: user._id, username: user.username, role: user.role, gender: user.gender, name: user.name }
