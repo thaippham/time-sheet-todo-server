@@ -83,7 +83,7 @@ router.post('/login', async (req, res) => {
       const tokenTichHop = externalData.token;
       
       const token = jwt.sign(
-        { id: user._id, role: user.role, gender: user.gender, name: user.name },
+        { id: user._id, role: user.role, subId: user.subId, gender: user.gender, name: user.name },
         SECRET_KEY,
         { expiresIn: '15d' }
       );
@@ -93,9 +93,8 @@ router.post('/login', async (req, res) => {
         isFirtLogin: false,
         token,
         tokenTichHop,
-        user: { id: user._id, username: user.username, role: user.role, gender: user.gender, name: user.name }
+        user: { id: user._id, username: user.username, role: user.role, subId: user.subId, gender: user.gender, name: user.name }
       });
-
     } catch (externalError) {
       console.error("Lỗi", externalError.message);
       return res.status(401).json({ message: 'Sai tài khoản hoặc mật khẩu' });

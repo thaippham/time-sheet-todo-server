@@ -2,52 +2,27 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../middleware/auth.middleware');
 const CalendarWork = require('../models/Calendar');
+const axios = require('axios');
 
 
-router.get('/range', verifyToken, async (req, res) => {
+router.get('/get-work-list', verifyToken, async (req, res) => {
+  const { month, year, accountId } = req.query;
+  const { subId, role } = req.user;
+  if (subId !== accountId && role === 'user') {
+    return res.status(403).json({ message: 'Không có quyền truy cập!' });
+  }
+  const tokenTichHop = req.headers['x-tichhop-token'];
   try {
-    const fromDateStr = req.query['from-date'];
-    const toDateStr = req.query['to-date'];
-    const { id } = req.user;
-    const userId = req.query['userId'];
-    if(id !== userId && userId !== null && userId !== undefined){
-        return res.status(500).json({ message: 'Không có quyền truy cập!' })
-    }
-
-    if (!fromDateStr || !toDateStr) {
-      return res.status(400).json({ message: "Thiếu từ ngày hoặc đến ngày" });
-    }
-
-    const fromDate = new Date(fromDateStr);
-    fromDate.setHours(0, 0, 0, 0);
-
-    const toDate = new Date(toDateStr);
-    toDate.setHours(23, 59, 59, 999);
-
-    let query = {
-      start: { $gte: fromDate, $lte: toDate }
-    };
-
-    if (userId) {
-      query.userId = userId; 
-    }
-
-    const works = await CalendarWork.find(query);
-    
-    const formattedWorks = works.map(work => ({
-      id: work._id,
-      employeeId: work.userId,
-      title: work.name,
-      start: work.start.toISOString(),
-      end: work.end.toISOString(),
-      gender: work.gender
-    }));
-
-    res.status(200).json(formattedWorks);
-
+    const calendarWorks = await axios.get(`${process.env.API_TICH_HOP}/employee/get-work-list`, {
+      params: { month, year, accountId },
+      headers: {
+        'Authorization': `Bearer ${tokenTichHop}`
+      }
+    });
+    res.json(calendarWorks.data);
   } catch (error) {
-    console.error("Lỗi:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error('Error fetching work list:', error);
+    return res.status(500).json({ message: 'Lỗi khi lấy danh sách công việc' });
   }
 });
 
